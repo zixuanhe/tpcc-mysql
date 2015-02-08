@@ -6,9 +6,9 @@
    * create database
      mysqladmin create tpcc1000
    * create tables
-     mysql tpcc1000 < create_table.sql
+     mysql -Dtpcc1000 -e'set default_storage_engine=tokudb; source create_table.sql;'
    * create indexes and FK ( this step can be done after loading data)
-     mysql tpcc1000 < add_fkey_idx.sql
+     mysql -Dtpcc1000 -e'source add_fkey_idx.sql;'
    * populate data
      - simple step
        tpcc_load 127.0.0.1:33000 tpcc1000 root "" 1000
