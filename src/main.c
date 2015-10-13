@@ -1,3 +1,15 @@
+#define PATCH_SEGFAULT
+/* 
+ * Patch SEGFAULT when using tpcc_start 
+ * 
+ * bug and patch reported on: 
+ * https://bugs.launchpad.net/perconatools/+bug/1084839
+ *
+ * Upadted on 2015-10-13
+ * 
+ */
+
+
 /*
  * main.pc
  * driver for the tpcc transactions
@@ -390,12 +402,14 @@ int main( int argc, char *argv[] )
     exit(1);
   }
 
+#ifndef PATCH_SEGFAULT
   /* EXEC SQL WHENEVER SQLERROR GOTO sqlerr; */
 
   for( i=0; i < num_conn; i++ ){
     ctx[i] = mysql_init(NULL);
     if(!ctx[i]) goto sqlerr;
   }
+#endif
 
   for( t_num=0; t_num < num_conn; t_num++ ){
     thd_arg[t_num].port= port;
@@ -667,6 +681,10 @@ int thread_main (thread_arg* arg)
   db_string_ptr = db_string;
 
   /* EXEC SQL WHENEVER SQLERROR GOTO sqlerr;*/
+#ifdef PATCH_SEGFAULT
+  ctx[t_num] = mysql_init(NULL);
+  if(!ctx[t_num]) goto sqlerr;
+#endif
 
   if(num_node > 0){ /* RAC mode */
     db_string_ptr = node_string[((num_node * t_num)/num_conn)];
@@ -741,6 +759,9 @@ int thread_main (thread_arg* arg)
 
   /* EXEC SQL DISCONNECT; */
   mysql_close(ctx[t_num]);
+#ifdef PATCH_SEGFAULT
+  mysql_thread_end();
+#endif
 
   printf(".");
   fflush(stdout);
